@@ -5,7 +5,7 @@
 Supported actions:
 - Selecting starting dir
 - Opening files in respective software
-- Differentiating icons for dirs, files and archives
+- Differentiating icons for dirs and files 
 - Going back on previous dir
 - Pop up menu supporting: 
     1. Refresh
@@ -24,3 +24,14 @@ Supported actions:
 
 New addition:
 - Rename function fully operational
+
+## *0.3.0*
+
+### Changes:
+- Refresh function renamed to refresh_n_sort and gaind respective functionality
+- Stat data now shows achives as type
+- Aded archive icon
+- Slight changes in desighn
+
+New addition:
+- Copy/Cut/Paste function fully operational
