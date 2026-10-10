@@ -75,13 +75,23 @@ class Explorer(tk.Tk):
         self.__pop_menu.add_command(label="\U0001F4DDRename",command= self.rename)
         self.__pop_menu.add_command(label="\U0001F5D1Delete",command= self.delete)
 
-        self.__top_frame = tk.Frame(self) #не знаю как еще создать растояние
-        self.__top_frame.pack(fill="x", padx=5, pady=5)
+        self.__top_frame = tk.Frame(self) 
+        self.__top_frame.pack(fill="x")
+        self.__top_frame.columnconfigure(0, weight=1)
+        self.__top_frame.columnconfigure(1, weight=1)
+        self.__top_frame.columnconfigure(2, weight=1)
+        self.__search_bar = tk.Entry(self.__top_frame)
+        self.__search_bar.grid(row=0, column=0, columnspan=2, sticky=tk.NSEW)
+        tk.Button(self.__top_frame, text= "\U0001F50D",command= self.search).grid(row=0, column=2, sticky="ew")
 
         self.__select_menu = tk.Menu(self)
         self.__select_menu.add_command(
             label="Select Folder",
             command= self.select_folder 
+            )
+        self.__select_menu.add_command(
+            label="Refresh",
+            command= lambda: self.refresh_n_sort(self.current_path)
             )
         self.config(menu = self.__select_menu)
 
@@ -134,6 +144,19 @@ class Explorer(tk.Tk):
         self.current_path = pathlib.Path(folder)  
         self.refresh_n_sort()
 
+    def search(self):
+        if not self.current_path: return
+        request = self.__search_bar.get()
+        if not request: return
+        result = list(self.current_path.glob(f"*{request}*"))
+        self.__listbox.delete(0, tk.END)
+        if result:
+            for path in result:
+                if path.is_file():
+                    if path.suffix in self.__archive_extensions: self.__listbox.insert(tk.END, f"\U0001F5C3 {path.name}")
+                    else: self.__listbox.insert(tk.END, f"\U0001F4C4 {path.name}")
+                else: self.__listbox.insert(tk.END, f"\U0001F4C1 {path.name}")
+        else: self.__listbox.insert(0,"No content")
 
     def open_clicked(self,event:tk.Event) -> None:
         selected = self.__listbox.get(self.__listbox.curselection()[0]).strip(self.__strip_str)

@@ -45,3 +45,17 @@ New addition:
 
 New addition:
 - No new functionality
+
+## *1.0.0*
+
+### Changes:
+- Minor bug fixes
+
+New addition:
+- Added full search functionality 
+- Search bar
+- Refresh button to top menu
+
+# CURRENTLY LAST VERSION 
+
+# END OF FILE 
