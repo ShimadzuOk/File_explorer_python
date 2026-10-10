@@ -1,10 +1,10 @@
 import shutil
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox,simpledialog
 import pathlib,os
-import subprocess
 
 current_path = ""
+copy_buffer = None
 
 def select_folder():
     global current_path
@@ -12,16 +12,7 @@ def select_folder():
     if folder == "":return
     current_path = pathlib.Path(folder)  
     content = sort_path()
-
-    try:
-        listbox.delete(0, tk.END)
-        if content:
-            for i in content:
-                if i.is_file():listbox.insert(tk.END, f"\U0001F4C4 {i.name}")
-                else:listbox.insert(tk.END, f"\U0001F4C1 {i.name}")
-        else: listbox.insert(0,"No content")
-    except Exception as e:
-        messagebox.showerror("Error", str(e))
+    refresh(content)
 
 
 def open_clicked(event):
@@ -81,6 +72,10 @@ def go_back():
     if not current_path: return
     previuos = current_path.parent
     content = sort_path(previuos)
+    refresh(content)
+    current_path = previuos
+
+def refresh(content):
     try:
         listbox.delete(0, tk.END)
         if content:
@@ -88,19 +83,6 @@ def go_back():
                 if i.is_file():listbox.insert(tk.END, f"\U0001F4C4 {i.name}")
                 else:listbox.insert(tk.END, f"\U0001F4C1 {i.name}")
         else: listbox.insert(0,"No content")
-        current_path = previuos
-    except Exception as e:
-        messagebox.showerror("Error", str(e))
-
-def refresh():
-    try:
-        if current_path:
-            listbox.delete(0, tk.END)
-            if list(current_path.iterdir()):
-                for i in current_path.iterdir():
-                    if i.is_file():listbox.insert(tk.END, f"\U0001F4C4 {i.name}")
-                    else:listbox.insert(tk.END, f"\U0001F4C1 {i.name}")
-            else: listbox.insert(0,"No content")
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
@@ -112,7 +94,7 @@ def delete():
                 if messagebox.askyesno(title="Delete?",icon="warning",message=f"DOUBLE SURE?"):
                     if path.is_file(): path.unlink(missing_ok=True)
                     else: shutil.rmtree(path)
-                    refresh()
+                    refresh(sort_path())
     except Exception as e: messagebox.showerror("Error", str(e))
 
 
@@ -120,7 +102,16 @@ def copy_selected():pass
 
 def paste():pass
 
-def rename():pass
+def rename():  #топорно потом придумаю
+    selection = listbox.curselection()[0]
+    if not current_path or not selection:return
+    name = pathlib.Path(listbox.selection_get().strip("\U0001F4C4\U0001F4C1 ")).name
+    new_name = simpledialog.askstring(title="Rename",prompt="Enter new name",initialvalue=name,parent=root)
+    if new_name == name:return
+    try: 
+        current_path.joinpath(name).rename(new_name)
+        refresh(sort_path())
+    except Exception as e: messagebox.showerror("Error", str(e))
 
 def new_create():
     if not current_path:return
@@ -137,7 +128,7 @@ def new_create():
         if form: 
             with open(current_path.joinpath(path_name),"w") as f: pass
         else: current_path.joinpath(path_name).mkdir()
-        refresh()
+        refresh(sort_path())
     except Exception as e: messagebox.showerror("Error", str(e))
 
 def sort_path(path = None):
@@ -152,27 +143,19 @@ def sort_path(path = None):
     sorted_dir = [pathlib.Path(i) for i in sorted(list(new_path.iterdir()),key= order,reverse=reversed)]
     return sorted_dir
 
-def sort():
-    sorted_dir = sort_path()
-    try:
-        listbox.delete(0, tk.END)
-        if sorted_dir:
-            for i in sorted_dir:
-                if i.is_file():listbox.insert(tk.END, f"\U0001F4C4 {i.name}")
-                else:listbox.insert(tk.END, f"\U0001F4C1 {i.name}")
-        else: listbox.insert(0,"No content")
-    except Exception as e:
-        messagebox.showerror("Error", str(e))
-
 def pop_up(event):
     if listbox.curselection() and listbox.get(listbox.curselection()[0]) != "No content": 
-            pop_menu.entryconfigure("Delete",state = "normal")
-            pop_menu.entryconfigure("Copy(PH)",state = "normal")
-            pop_menu.entryconfigure("Rename(PH)",state = "normal")
+        pop_menu.entryconfigure("Delete",state = "normal")
+        pop_menu.entryconfigure("Copy(PH)",state = "normal")
+        pop_menu.entryconfigure("Rename",state = "normal")  
     else: 
         pop_menu.entryconfigure("Delete",state = "disabled")
         pop_menu.entryconfigure("Copy(PH)",state = "disabled")
-        pop_menu.entryconfigure("Rename(PH)",state = "disabled")
+        pop_menu.entryconfigure("Rename",state = "disabled")
+        
+    if current_path: pop_menu.entryconfigure("Sort",state = "normal")
+    else: pop_menu.entryconfigure("Sort",state = "disabled")
+
     pop_menu.tk_popup(root.winfo_pointerx(),root.winfo_pointery()) 
 
 root = tk.Tk()
@@ -188,26 +171,26 @@ sorting_type = tk.StringVar(value="Name")
 asc_desc = tk.StringVar(value="Up")
 create_new = tk.StringVar()
 
-pop_menu.add_command(label="Refresh",command=refresh)
+pop_menu.add_command(label="Refresh",command=lambda:refresh(sort_path()))
 
 pop_menu.add_cascade(label="Sort",menu= sort_menu )
 sort_menu.add_radiobutton(
     label="Name",
     variable=sorting_type,
     value="Name",
-    command= sort
+    command= lambda:refresh(sort_path())
 )
 sort_menu.add_radiobutton(
     label="Size",
     variable=sorting_type,
     value="Size",
-    command= sort
+    command= lambda:refresh(sort_path())
 )
 sort_menu.add_radiobutton(
     label="Date modified",
     variable=sorting_type,
     value="Date",
-    command= sort
+    command= lambda:refresh(sort_path())
 )
 
 sort_menu.add_separator()
@@ -216,23 +199,23 @@ sort_menu.add_radiobutton(
     label="Ascending",
     variable=asc_desc,
     value="Up",
-    command= sort
+    command= lambda:refresh(sort_path())
 )
 sort_menu.add_radiobutton(
     label="Descending",
     variable=asc_desc,
     value="Down",
-    command= sort
+    command= lambda:refresh(sort_path())
 )
 
 pop_menu.add_cascade(label="New+",menu=plus_menu)
 plus_menu.add_command(label="New folder",command=lambda: (create_new.set("New folder"),new_create()))
 plus_menu.add_command(label="New txt file",command=lambda: (create_new.set("New txt file"),new_create()))
-plus_menu.add_command(label="New rar archive",command=lambda: (create_new.set("New txt file"),new_create()))
+plus_menu.add_command(label="New rar archive",command=lambda: (create_new.set("New rar archive"),new_create()))
 
 pop_menu.add_command(label="Copy(PH)")
 pop_menu.add_command(label="Paste(PH)")
-pop_menu.add_command(label="Rename(PH)")
+pop_menu.add_command(label="Rename",command=rename)
 pop_menu.add_command(label="Delete",command=delete)
 
 top_frame = tk.Frame(root) #не знаю как еще создать растояние
