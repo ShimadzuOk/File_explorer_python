@@ -35,3 +35,13 @@ New addition:
 
 New addition:
 - Copy/Cut/Paste function fully operational
+
+## *0.4.0*
+
+### Changes:
+- Complete overhaul of the code to make it object oriented
+- Change in pop up menu desighn, added icons
+- Minor bug fixes
+
+New addition:
+- No new functionality
